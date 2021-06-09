@@ -1,12 +1,14 @@
-class Test {
-    private testNumber:number=0;
-    private testString:string = "";
+/** @format */
 
-    public test(){
-        console.log("test go go go!");
+class Test {
+    private testNumber = 0
+    private testString = ''
+    public test() {
+        console.log('test go go go!')
     }
 }
 
+const test = new Test()
+test.test()
 
-const test = new Test();
-test.test();
+console.log()
