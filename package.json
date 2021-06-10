@@ -2,8 +2,12 @@
     "name": "catoy",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "private": true,
+    "workspaces": [
+        "packages/**"
+    ],
     "scripts": {
+        "dev": "yarn workspace boy run dev",
         "prepare": "npx husky install",
         "lint": "npx eslint --ext .ts,.js,.jsx,.tsx .",
         "lint:fix": "npx eslint --ext .ts,.js,.jsx,.tsx . --fix",
