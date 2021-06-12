@@ -2,7 +2,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {MyRouter} from './src/router/index.js'
+import {MyRouter} from './src/router'
 
 const div = document.createElement('div')
 div.style.width = '100%'

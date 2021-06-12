@@ -1,11 +1,11 @@
 /** @format */
 
 import React from 'react'
-import {HashRouter, Route, Switch, hashHistory} from 'react-router-dom'
-import {Test} from '../page/Test.js'
+import {HashRouter, Route, Switch} from 'react-router-dom'
+import {Test} from '../page/Test'
 
 const MyRouter = () => (
-    <HashRouter history={hashHistory}>
+    <HashRouter>
         <Switch>
             <Route exact path="/" component={Test}></Route>
         </Switch>

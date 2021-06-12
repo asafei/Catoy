@@ -4,7 +4,7 @@ const path = require('path')
 let HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-    entry: './app.jsx',
+    entry: './app.tsx',
     devtool: 'source-map',
     mode: 'development',
     output: {
@@ -20,12 +20,15 @@ module.exports = {
         rules: [
             {
                 test: /\.(js|jsx|ts|tsx)$/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-env'],
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: ['@babel/preset-env'],
+                        },
                     },
-                },
+                    {loader: 'ts-loader'},
+                ],
                 exclude: /node_modules/,
             },
             {
@@ -40,8 +43,11 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: './dist/template.html',
+            template: './template.html',
             filename: './index.html',
         }),
     ],
+    resolve: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    },
 }
