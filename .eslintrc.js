@@ -17,6 +17,8 @@ module.exports = {
         node: true,
     },
     rules:{
-        '@typescript-eslint/no-var-requires': 0
+        '@typescript-eslint/no-var-requires': 0,
+        '@typescript-eslint/no-non-null-asserted-optional-chain': 'off'
+        
     }
 }
