@@ -69,6 +69,8 @@ export class WGLUtil {
 
         //输出错误信息，删除shader
         console.error('shader 编译出错', gl.getShaderInfoLog(shader))
+        console.error('shader 编译出错fg', source)
+
         gl.deleteShader(shader)
     }
 }

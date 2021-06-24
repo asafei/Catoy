@@ -2,12 +2,12 @@
 
 import React from 'react'
 import {HashRouter, Route, Switch} from 'react-router-dom'
-import {Shadow} from '../page'
+import {Shadow, ShadowTest} from '../page'
 
 const MyRouter = () => (
     <HashRouter>
         <Switch>
-            <Route exact path="/" component={Shadow}></Route>
+            <Route exact path="/" component={ShadowTest}></Route>
         </Switch>
     </HashRouter>
 )

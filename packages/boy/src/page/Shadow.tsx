@@ -3,8 +3,17 @@
 import React, {useEffect} from 'react'
 import '../css/index.css'
 import {createShape} from './data'
-import {WGLUtil, OrbitControl, PerspectiveCamera, Camera} from 'cat'
+import {WGLUtil, OrbitControl, PerspectiveCamera, Camera, OrthoCamera} from 'cat'
 
+/**
+ * 原理
+ * 1、获取光源为相机时的深度图depthMap
+ * 2、在正常相机视角下获取可视点的深度值depthEye，同时获取可视点在光源坐标下的深度值depthLight；
+ * 3、比较depthEye和depthLight，若depthEye<depthLight则该点无阴影，否则则处于阴影区
+ * 4、针对阴影区的地方需要特殊处理
+ *
+ * ext，波纹情况需要处理；
+ */
 function Shadow() {
     useEffect(() => {
         const element = document.getElementById('container')
@@ -90,18 +99,14 @@ function Shadow() {
 
         const cameraModelMatrix = new Float32Array([0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 5, 0, 0, 1])
         invert(camera.cameraViewMatrix, cameraModelMatrix)
-        // var cameraViewMatrix = new Float32Array(16);
-        // invert(cameraViewMatrix, cameraModelMatrix);
 
         // // this ortho size should be adjusted to ths scene bounding box
-        // var orthoProjection = getOrthoProjection(-5, 5, -5, 5, -5, 5);
+        const orthoProjection = OrthoCamera.getOrthoProjection(-5, 5, -5, 5, -5, 5)
         // // this light view matrix is linked to direction [1, 1, 1]
-        // var lightViewMatrix = new Float32Array([
-        //     -0.7071067690849304, -0.40824830532073975, 0.5773501992225647, 0,
-        //     0.7071067690849304, -0.40824833512306213, 0.5773502588272095, 0,
-        //     0, 0.8164965510368347, 0.5773503184318542, 0,
-        //     0, 0, 0, 1
-        // ]);
+        const lightViewMatrix = new Float32Array([
+            -0.7071067690849304, -0.40824830532073975, 0.5773501992225647, 0, 0.7071067690849304, -0.40824833512306213,
+            0.5773502588272095, 0, 0, 0.8164965510368347, 0.5773503184318542, 0, 0, 0, 0, 1,
+        ])
 
         let time_old = 0
         const animate = function (time: number) {
@@ -121,8 +126,10 @@ function Shadow() {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
             gl.uniformMatrix4fv(main_objectModelMatrixLocation, false, objectModelMatrix)
-            gl.uniformMatrix4fv(main_cameraProjectionLocation, false, perspectiveProjectionMatrix)
-            gl.uniformMatrix4fv(main_cameraViewMatrixLocation, false, camera.cameraViewMatrix)
+            // gl.uniformMatrix4fv(main_cameraProjectionLocation, false, perspectiveProjectionMatrix)
+            // gl.uniformMatrix4fv(main_cameraViewMatrixLocation, false, camera.cameraViewMatrix)
+            gl.uniformMatrix4fv(main_cameraProjectionLocation, false, orthoProjection)
+            gl.uniformMatrix4fv(main_cameraViewMatrixLocation, false, lightViewMatrix)
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer)
             gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
