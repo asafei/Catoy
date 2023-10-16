@@ -34,8 +34,4 @@ export class OrthoCamera extends Camera {
         ])
         return res
     }
-
-    getProjection(): number[] {
-        throw new Error('Method not implemented.')
-    }
 }

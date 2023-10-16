@@ -1,16 +1,15 @@
 /** @format */
 
-import {func, number} from 'prop-types'
-
 export class Camera {
     public cameraViewMatrix = new Float32Array(16)
+    public cameraProjectionMatrix = new Float32Array(16)
     private position: number[] = [1, 0, 0]
     private target: number[] = [0, 0, 0]
     private up = [0, 0, 1]
 
     private directon: number[] = [1, 0, 0]
 
-    getProjection(): number[] {
+    getProjection(): Float32Array {
         throw new Error('Method not implemented.')
     }
 
