@@ -25,6 +25,10 @@ export class Camera {
         normalize(this.directon, direction)
         _lookAt(this.cameraViewMatrix, position, target, this.up)
     }
+
+    getPosition(): number[] {
+        return this.position
+    }
 }
 
 function _lookAt(out: Float32Array, eye: number[], center: number[], up: number[]) {

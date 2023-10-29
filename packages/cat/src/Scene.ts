@@ -1,7 +1,7 @@
 /** @format */
 
 import {Model} from './model'
-import {Material} from './model/materrial/Material'
+import {Material} from './model/material/Material'
 import {Program} from './render'
 
 export class Scene {

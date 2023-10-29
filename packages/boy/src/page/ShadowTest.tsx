@@ -206,7 +206,7 @@ function ShadowTest() {
             gl.useProgram(mainProgram)
             // 将纹理绑定到纹理单元上
             // gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, targetTexture)
+            // gl.bindTexture(gl.TEXTURE_2D, targetTexture)
 
             gl.enable(gl.DEPTH_TEST)
             gl.depthMask(true)
@@ -225,7 +225,7 @@ function ShadowTest() {
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer)
             gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
-            gl.bindTexture(gl.TEXTURE_2D, null)
+            // gl.bindTexture(gl.TEXTURE_2D, null)
         }
 
         function renderShadowMap() {
