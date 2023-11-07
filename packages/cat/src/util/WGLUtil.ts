@@ -1,6 +1,40 @@
 /** @format */
 
 export class WGLUtil {
+    public static createTextureAndBindData(
+        gl: WebGL2RenderingContext,
+        img: HTMLImageElement | HTMLImageElement[],
+    ): WebGLTexture | null {
+        const textureType = Array.isArray(img) ? gl.TEXTURE_CUBE_MAP : gl.TEXTURE_2D
+        const texture = gl.createTexture() as WebGLTexture
+        gl.bindTexture(textureType, texture)
+        if (Array.isArray(img)) {
+            for (let i = 0; i < 6; i++) {
+                gl.texImage2D(
+                    gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                    0,
+                    gl.RGBA,
+                    img[i].width,
+                    img[i].height,
+                    0,
+                    gl.RGBA,
+                    gl.UNSIGNED_BYTE,
+                    img[i],
+                )
+            }
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+        } else {
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
+            gl.generateMipmap(gl.TEXTURE_2D)
+        }
+        gl.bindTexture(textureType, null)
+        return texture
+    }
+
     /**
      *
      * @param gl

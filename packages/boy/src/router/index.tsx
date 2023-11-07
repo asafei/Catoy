@@ -20,12 +20,18 @@ import {
     BlendingDemo,
     FaceCullingDemo,
     FramebufferDemo,
+    CubeMapDemo,
+    CubeMapDemo2,
+    CubeMapDemo3,
 } from '../page'
 
 const MyRouter = () => (
     <HashRouter>
         <Switch>
-            <Route exact path="/" component={FramebufferDemo}></Route>
+            <Route exact path="/" component={CubeMapDemo3}></Route>
+            <Route exact path="/cubeMapDemo2" component={CubeMapDemo2}></Route>
+            <Route exact path="/cubeMapDemo" component={CubeMapDemo}></Route>
+            <Route exact path="/framebufferDemo" component={FramebufferDemo}></Route>
             <Route exact path="/faceCullingDemo" component={FaceCullingDemo}></Route>
             <Route exact path="/blendingDemo" component={BlendingDemo}></Route>
             <Route exact path="/stencilDemo" component={StencilDemo}></Route>

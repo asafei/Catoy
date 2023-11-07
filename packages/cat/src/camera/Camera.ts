@@ -6,8 +6,11 @@ export class Camera {
     private position: number[] = [1, 0, 0]
     private target: number[] = [0, 0, 0]
     private up = [0, 0, 1]
+    // private up = [0, 1, 0]
 
     private directon: number[] = [1, 0, 0]
+
+    private _programToUniformMap: WeakMap<WebGLProgram, any> = new WeakMap()
 
     getProjection(): Float32Array {
         throw new Error('Method not implemented.')
@@ -28,6 +31,28 @@ export class Camera {
 
     getPosition(): number[] {
         return this.position
+    }
+
+    onBuild(gl: WebGL2RenderingContext, program: WebGLProgram) {
+        let uniforms = this._programToUniformMap.get(program)
+        if (!uniforms) {
+            const cameraProjectionLocation = gl.getUniformLocation(program, 'camera_uProjectionMatrix')
+            const cameraViewMatrixLocation = gl.getUniformLocation(program, 'camera_uViewMatrix')
+            const cameraPositionLocation = gl.getUniformLocation(program, 'camera_uPosition')
+            uniforms = {
+                cameraProjection: {location: cameraProjectionLocation},
+                cameraViewMatrix: {location: cameraViewMatrixLocation},
+                cameraPosition: {location: cameraPositionLocation},
+            }
+            this._programToUniformMap.set(program, uniforms)
+        }
+    }
+    setup(gl: WebGL2RenderingContext, program: WebGLProgram): void {
+        const {cameraProjection, cameraViewMatrix, cameraPosition} = this._programToUniformMap.get(program) || {}
+
+        gl.uniformMatrix4fv(cameraProjection.location, false, this.cameraProjectionMatrix)
+        gl.uniformMatrix4fv(cameraViewMatrix.location, false, this.cameraViewMatrix)
+        gl.uniform3f(cameraPosition.location, this.position[0], this.position[1], this.position[2])
     }
 }
 

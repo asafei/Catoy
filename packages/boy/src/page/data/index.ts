@@ -1,6 +1,21 @@
 /* eslint-disable prettier/prettier */
 /** @format */
 
+// 创建平面 y轴朝上
+export function createPlane4(side = 4, height = -1): any {
+    const half_side = side / 2
+    // positions          // normals           // texture coords
+    const vertices = [
+        -half_side, height, half_side, 0, 1, 0, 0.0, 0.0,
+        -half_side, height, -half_side, 0, 1, 0, 0.0, 0.0,
+        half_side, height, -half_side, 0, 1, 0, 0.0, 0.0,
+        -half_side, height, half_side, 0, 1, 0, 0.0, 0.0,
+        half_side, height, -half_side, 0, 1, 0, 0.0, 0.0,
+        half_side, height, half_side, 0, 1, 0, 0.0, 0.0,
+    ]
+
+    return vertices
+}
 
 // 创建立着的面
 export function createPlane3(): any {
@@ -16,6 +31,7 @@ export function createPlane3(): any {
     return vertices
 }
 
+// 创建平面 z轴朝上
 export function createPlane2(side = 4, height = -1): any {
     const half_side = side / 2
     // positions          // normals           // texture coords
@@ -61,6 +77,7 @@ export function createPlane(side = 4, height = -1): any {
     return {indices, vertices, normals}
 }
 
+// z 朝上
 export function createCube2() {
     // positions          // normals           // texture coords
     const vertices = [

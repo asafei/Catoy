@@ -54,7 +54,11 @@ export class OrbitControl {
         const x = 5 * Math.cos(this.PHI) * Math.cos(this.THETA)
         const y = 5 * Math.cos(this.PHI) * Math.sin(-this.THETA)
         const z = 5 * Math.sin(this.PHI)
+        // z朝上
         this.camera.lookAt([x, y, z], [0, 0, 0])
+
+        // y朝上
+        // this.camera.lookAt([x, z, -y], [0, 0, 0])
     }
 
     private mouseDown = (e: any) => {

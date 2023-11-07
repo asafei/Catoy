@@ -2,7 +2,7 @@
 
 import {Material} from './Material'
 
-export class BaseMaterial implements Material {
+export class BaseMaterial extends Material {
     public type = 'BaseMaterial'
     public vsCode = vsCode
     public fsCode = fsCode
