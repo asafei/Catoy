@@ -6,6 +6,9 @@ import {WGLUtil} from '../../util'
  * 包括各种gl状态
  */
 export class Material {
+    public VSCode!: string
+    public FSCode!: string
+
     depthTest = true
     depthFunc = 513
 
@@ -29,8 +32,6 @@ export class Material {
         throw new Error(`需要在子类中实现`)
     }
 }
-
-export type Color = [number, number, number]
 
 const ProgramStore = {
     store: new Map<string, WebGLProgram>(),
@@ -56,5 +57,5 @@ const TextureStore = {
     },
 }
 
-;(window as any)['ProgramStore'] = ProgramStore
-;(window as any)['TextureStore'] = TextureStore
+// ;(window as any)['ProgramStore'] = ProgramStore
+// ;(window as any)['TextureStore'] = TextureStore

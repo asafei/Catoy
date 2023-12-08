@@ -22,3 +22,14 @@
  *
  * @format
  */
+
+export * from './Actor'
+export type Color = [number, number, number]
+export type ImageCube = [
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+]

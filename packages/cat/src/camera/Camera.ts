@@ -5,12 +5,24 @@ export class Camera {
     public cameraProjectionMatrix = new Float32Array(16)
     private position: number[] = [1, 0, 0]
     private target: number[] = [0, 0, 0]
-    private up = [0, 0, 1]
-    // private up = [0, 1, 0]
+    // private up = [0, 0, 1]
+    private up = [0, 1, 0]
 
     private directon: number[] = [1, 0, 0]
 
     private _programToUniformMap: WeakMap<WebGLProgram, any> = new WeakMap()
+
+    get ProjectionMatrix(): Float32Array {
+        return this.cameraProjectionMatrix
+    }
+
+    get ViewMatrix(): Float32Array {
+        return this.cameraViewMatrix
+    }
+
+    get Position(): number[] {
+        return this.position
+    }
 
     getProjection(): Float32Array {
         throw new Error('Method not implemented.')

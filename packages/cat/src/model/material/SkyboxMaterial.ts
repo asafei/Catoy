@@ -1,19 +1,38 @@
 /** @format */
 
+import {Color, ImageCube} from '../../core'
 import {Material} from './Material'
+import VSCode from '../../render/gl/shader/skybox.vs.glsl'
+import FSCode from '../../render/gl/shader/skybox.fs.glsl'
 
 export class SkyboxMaterial extends Material {
-    set maps(element: HTMLImageElement[] | undefined) {
+    depthTest = true
+    depthFunc = 515
+    set maps(element: ImageCube | undefined) {
         this._maps = element
     }
 
-    get maps(): HTMLImageElement[] | undefined {
+    get maps(): ImageCube | undefined {
         return this._maps
     }
 
-    constructor(public color = [1, 1, 1], private _maps?: HTMLImageElement[]) {
+    get Color(): Color {
+        return this.color
+    }
+
+    get CubeTexture(): ImageCube | undefined {
+        return this._maps
+    }
+
+    get IsTexture(): boolean {
+        return this._maps !== undefined
+    }
+
+    constructor(public color: Color = [1, 1, 1], private _maps?: ImageCube) {
         super('SkyboxMaterial', vsCode, fsCode)
         this.maps = _maps
+        this.VSCode = VSCode
+        this.FSCode = FSCode
     }
 
     onBuild(gl: WebGL2RenderingContext): void {

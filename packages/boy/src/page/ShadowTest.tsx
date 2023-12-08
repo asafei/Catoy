@@ -4,7 +4,6 @@ import React, {useEffect} from 'react'
 import '../css/index.css'
 import {createShape} from './data'
 import {WGLUtil, OrbitControl, PerspectiveCamera, Camera, OrthoCamera} from 'cat'
-import {Viewr} from '../viewer/Viewer'
 
 /**
  * 原理

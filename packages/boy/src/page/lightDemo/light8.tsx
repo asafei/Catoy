@@ -306,7 +306,7 @@ function Light8(): JSX.Element {
             ) {
                 // 计算衰减
                 float fragDistanceToLight = length(fragPos - u_spotLightPosition);
-                float attenuation = (u_spotLightConstant + u_spotLightLinear * fragDistanceToLight + u_spotLightQuadratic * (fragDistanceToLight * fragDistanceToLight));
+                float attenuation = 1.0 / (u_spotLightConstant + u_spotLightLinear * fragDistanceToLight + u_spotLightQuadratic * (fragDistanceToLight * fragDistanceToLight));
 
                 // 指向光源
                 vec3 lightDir = normalize(u_spotLightPosition - fragPos);

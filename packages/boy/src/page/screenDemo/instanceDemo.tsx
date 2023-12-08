@@ -4,14 +4,18 @@
 import React, {useEffect} from 'react'
 import '../../css/index.css'
 import {createCube3, createPlane4} from '../data'
-import {Geometry, Model, OrbitControl, PerspectiveCamera, ColorMaterial, PhongMaterial, Skybox} from 'cat'
+import {Geometry, Model, OrbitControl, PerspectiveCamera, ColorMaterial, PhongMaterial, Skybox, InstanceModel} from 'cat'
 /*
  * Note: 
- *  — reflect
- *  - 将各个类封装成组件
+ *  — 将glDrawArrays和glDrawElements各自改为glDrawArraysInstanced和glDrawElementsInstanced
+ *      - 用于实例化的函数版本需要设置一个额外的参数，叫做实例数量(Instance Count)
+ *  - GLSL在着色器中嵌入了另一个内建变量，叫做gl_InstanceID。这个变量表示当前实例的索引，从0开始计数, 它在每个实例渲染时都会增加1
+ *  - 
+ *  - TODO: 当前一个shader配置了model_isInstancing, 另一个没配置，就会出现画不出的情况
+ *   - 当获取一个不存在的location是，会返回null
  * 
  */
-function CubeMapDemo3(): JSX.Element {
+function InstanceDemo(): JSX.Element {
     useEffect(() => {
         const pngUrl = './img/container2.png'
         const pngTask = loadImage(pngUrl);
@@ -85,19 +89,35 @@ function CubeMapDemo3(): JSX.Element {
             const cubeMaterial1 =  new PhongMaterial()
             cubeMaterial1.environmentMap = cubeImages
             const cubeModel1 = new Model(cubeGeometry, cubeMaterial1)
-            cubeModel1.modelMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.6, 0, -0.5, 1]
+            cubeModel1.modelMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.6, 0, -0.6, 1]
             models.push(cubeModel1);
 
+            
             const cubeMaterial2 =  new ColorMaterial([0, 1, 0], img)
             const cubeModel2 = new Model(cubeGeometry, cubeMaterial2)
             cubeModel2.modelMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -0.6, 0, 0.6, 1]
             models.push(cubeModel2);
 
+            
+
             // 创建立方体灯光模型
+            const instanceMatrix = []
+            const cubInstanceMaterial =  new ColorMaterial([1, 0, 1])
+            for(let i = -50; i < 50; i++){
+                for(let j = -50; j < 50; j++) {
+                    instanceMatrix.push(0.1, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0.1, 0, 0.2 * i, 0.1, 0.2 * j, 1)
+                }
+            }
+            const instanceModel = new InstanceModel(cubeGeometry, cubInstanceMaterial, instanceMatrix.length / 16)
+            instanceModel.instanceMatrices = new Float32Array(instanceMatrix)
+            models.push(instanceModel)
+
+
             const cubeLightMaterial =  new ColorMaterial([1, 1, 1])
             const cubeLightModel = new Model(cubeGeometry, cubeLightMaterial)
             cubeLightModel.modelMatrix = [0.1, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0.1, 0, 1, 1, 1, 1]
             models.push(cubeLightModel);
+
         }
         return models
     }
@@ -136,6 +156,7 @@ function CubeMapDemo3(): JSX.Element {
         skybox.onBuild(gl)
         camera.onBuild(gl, skybox.material._program as WebGLProgram);
 
+
         const animate = function () {
             control.update()
             render()
@@ -158,10 +179,7 @@ function CubeMapDemo3(): JSX.Element {
                 camera.setup(gl, program);
 
                 modelList.forEach(mesh => {
-                    mesh.setup(gl)
-
-                    mesh.material.setup(gl)
-                    mesh.geometry.render(gl)
+                    mesh.render(gl)
                 });
                 gl.useProgram(program)
 
@@ -190,7 +208,7 @@ function CubeMapDemo3(): JSX.Element {
     return <div id="container"></div>
 }
 
-export {CubeMapDemo3}
+export {InstanceDemo}
 
 function invert(out: Float32Array, a: Float32Array) {
     const a00 = a[0],

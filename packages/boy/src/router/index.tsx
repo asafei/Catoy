@@ -23,12 +23,18 @@ import {
     CubeMapDemo,
     CubeMapDemo2,
     CubeMapDemo3,
+    InstanceDemo,
+    AdLight1,
+    AdLight2,
 } from '../page'
 
 const MyRouter = () => (
     <HashRouter>
         <Switch>
-            <Route exact path="/" component={CubeMapDemo3}></Route>
+            <Route exact path="/" component={AdLight2}></Route>
+            <Route exact path="/adlight1" component={AdLight1}></Route>
+            <Route exact path="/instanceDemo" component={InstanceDemo}></Route>
+            <Route exact path="/cubemap" component={CubeMapDemo3}></Route>
             <Route exact path="/cubeMapDemo2" component={CubeMapDemo2}></Route>
             <Route exact path="/cubeMapDemo" component={CubeMapDemo}></Route>
             <Route exact path="/framebufferDemo" component={FramebufferDemo}></Route>

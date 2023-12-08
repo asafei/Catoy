@@ -10,7 +10,7 @@ const materialPhongs = [
         ambient: [1, 0.5, 0.31],
         diffuse: [1, 0.5, 0.31],
         specular: [0.5, 0.5, 0.5],
-        shininess: 0.1,
+        shininess: 0.01,
     },
     {
         ambient: [0.0215, 0.1745, 0.0215],
@@ -39,12 +39,11 @@ const materialPhongs = [
 ]
 
 /**
- * 使用webgl2
- * phong 光照模型
- * 材质也有三属性: ambient, diffuse, specular
- * 光源也有三属性: ambient, diffuse, specular
+ *  gamma校正
+ *  * outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));
+ *  * 严格来说，这里这个处理应该是gamma编码，目的就是为了适应显示器的gamma校正
  */
-function Light6(): JSX.Element {
+export function AdLight1(): JSX.Element {
     useEffect(() => {
         const element = document.getElementById('container')
         const canvas = document.createElement('canvas')
@@ -183,12 +182,17 @@ function Light6(): JSX.Element {
 
                     // 计算镜面反射
                     vec3 viewDir = normalize(u_viewPosition - vFragPos);
-                    vec3 reflectDir = reflect(-lightDir, norm);
-                    float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_materialShininess);
+                    // vec3 reflectDir = reflect(-lightDir, norm);
+                    // float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_materialShininess);
+
+                    vec3 halfwayDir = normalize(lightDir + viewDir);
+                    float spec = pow(max(dot(norm, halfwayDir), 0.0), u_materialShininess);
                     vec3 specular = u_lightSpecular * (spec * u_materialSpecular);
 
                     vec3 color = ambient + diffuse + specular;
                     outColor = vec4(color, 1.0);
+                    // 这里是gamma编码，
+                    outColor.rgb = pow(outColor.rgb, vec3(1.0/2.2));
                 }
             }`
 
@@ -319,8 +323,6 @@ function Light6(): JSX.Element {
     })
     return <div id="container"></div>
 }
-
-export {Light6}
 
 function invert(out: Float32Array, a: Float32Array) {
     const a00 = a[0],

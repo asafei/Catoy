@@ -1,6 +1,8 @@
 /** @format */
 
 import {Material} from './Material'
+import VSCode from '../../render/gl/shader/color.vs.glsl'
+import FSCode from '../../render/gl/shader/color.fs.glsl'
 
 export class ColorMaterial extends Material {
     set map(element: HTMLImageElement | undefined) {
@@ -11,9 +13,22 @@ export class ColorMaterial extends Material {
         return this._map
     }
 
+    get Texture(): HTMLImageElement | undefined {
+        return this._map
+    }
+
+    get IsTexture(): boolean {
+        return this._map !== undefined
+    }
+
+    get Color(): number[] {
+        return this.color
+    }
+
     constructor(public color = [1, 1, 1], private _map?: HTMLImageElement) {
         super('ColorMaterial', vsCode, fsCode)
-        this.map = _map
+        this.VSCode = VSCode
+        this.FSCode = FSCode
     }
 
     onBuild(gl: WebGL2RenderingContext): void {
@@ -55,9 +70,9 @@ export class ColorMaterial extends Material {
         const {_materialColor, _materialTexture, _materialIsTexture} = this._uniforms
 
         gl.uniform3f(_materialColor.location, this.color[0], this.color[1], this.color[2])
-        gl.uniform1f(_materialIsTexture.location, this.map ? 1 : 0)
+        gl.uniform1f(_materialIsTexture.location, this._map !== undefined ? 1 : 0)
 
-        if (this._map && _materialTexture) {
+        if (this._map !== undefined && _materialTexture) {
             gl.activeTexture(gl.TEXTURE0 + 0)
             gl.bindTexture(gl.TEXTURE_2D, _materialTexture.value)
             gl.uniform1i(_materialTexture.location, 0)
@@ -74,21 +89,43 @@ const vsCode = `#version 300 es
     in vec3 normal;
     in vec2 uv;
 
+    in vec3 model_instanceColor;
+    in mat4 model_instanceMatrix;
+
     uniform mat4 camera_uProjectionMatrix;
     uniform mat4 camera_uViewMatrix;
     uniform mat4 model_uModelMatrix;
+    uniform float model_uIsInstancing;
 
     out vec3 vNormal;
     out vec3 vFragPos;
     out vec2 vUV;
 
-    void main(void) { 
-        vec4 positionWorldSpace = model_uModelMatrix * vec4(position, 1.);
-        gl_Position = camera_uProjectionMatrix * camera_uViewMatrix * positionWorldSpace;
+    void main(void) {
+        // mat4 mMatrix = model_uIsInstancing > 0.0 ? model_instanceMatrix : model_uModelMatrix;
         
-        vFragPos = positionWorldSpace.xyz;
-        vNormal = mat3(transpose(inverse(model_uModelMatrix))) * normal;
-        vUV = uv;
+        // vec4 positionWorldSpace = mMatrix * vec4(position, 1.);
+        // gl_Position = camera_uProjectionMatrix * camera_uViewMatrix * positionWorldSpace;
+        // vFragPos = positionWorldSpace.xyz;
+        // vNormal = mat3(transpose(inverse(mMatrix))) * normal;
+        // vUV = uv;
+
+
+        if(model_uIsInstancing > 0.0){
+            vec4 positionWorldSpace = model_instanceMatrix * vec4(position, 1.);
+            gl_Position = camera_uProjectionMatrix * camera_uViewMatrix * positionWorldSpace;
+            
+            vFragPos = positionWorldSpace.xyz;
+            vNormal = mat3(transpose(inverse(model_instanceMatrix))) * normal;
+            vUV = uv;
+        } else {
+            vec4 positionWorldSpace = model_uModelMatrix * vec4(position, 1.);
+            gl_Position = camera_uProjectionMatrix * camera_uViewMatrix * positionWorldSpace;
+            
+            vFragPos = positionWorldSpace.xyz;
+            vNormal = mat3(transpose(inverse(model_uModelMatrix))) * normal;
+            vUV = uv;
+        }
     }`
 
 const fsCode = `#version 300 es

@@ -79,20 +79,26 @@ const vsCode = `#version 300 es
     in vec3 normal;
     in vec2 uv;
 
+    in vec3 model_instanceColor;
+    in mat4 model_instanceMatrix;
+
     uniform mat4 camera_uProjectionMatrix;
     uniform mat4 camera_uViewMatrix;
     uniform mat4 model_uModelMatrix;
+    uniform float model_uIsInstancing;
 
     out vec3 vNormal;
     out vec3 vFragPos;
     out vec2 vUV;
 
     void main(void) { 
-        vec4 positionWorldSpace = model_uModelMatrix * vec4(position, 1.);
+        mat4 mMatrix = model_uIsInstancing > 0.0 ? model_instanceMatrix : model_uModelMatrix;
+        
+        vec4 positionWorldSpace = mMatrix * vec4(position, 1.);
         gl_Position = camera_uProjectionMatrix * camera_uViewMatrix * positionWorldSpace;
         
         vFragPos = positionWorldSpace.xyz;
-        vNormal = mat3(transpose(inverse(model_uModelMatrix))) * normal;
+        vNormal = mat3(transpose(inverse(mMatrix))) * normal;
         vUV = uv;
     }`
 
@@ -208,16 +214,16 @@ const fsCode = `#version 300 es
     // }
 
     vec3 calculateReflectColor(vec3 fragCoord, vec3 viewCoord, vec3 normalCoord, samplerCube skybox){
-        vec3 viewTo = normalize(viewCoord - fragCoord);
+        vec3 viewTo = normalize(fragCoord - viewCoord);
         vec3 reflectDir = reflect(viewTo, normalCoord);
         vec3 reflectColor = texture(skybox, reflectDir).rgb;
         return reflectColor;
     }
 
     // vec3 calculateRefractColor(vec3 fragCoord, vec3 viewCoord, vec3 normalCoord, samplerCube skybox){
-    //     // 折射率
+    //     // 折射率: 空气的折射率是1.0, 水是1.333, 玻璃是1.52, 金属是2.42, 钻石是2.41
     //     float ratio = 1.0 / 1.52;
-    //     vec3 viewTo = normalize(viewCoord - fragCoord);
+    //     vec3 viewTo = normalize(fragCoord - viewCoord);
     //     vec3 refractDir = refract(viewTo, normalCoord, ratio);
     //     vec3 refractColor = texture(skybox, reflectDir);
     //     return refractColor;

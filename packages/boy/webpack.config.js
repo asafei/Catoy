@@ -39,6 +39,10 @@ module.exports = {
                 test: /\.(woff|woff2|eot|ttf|otf|svg|png)$/,
                 use: ['file-loader'],
             },
+            {
+                test: /\.(glsl|vs|fs)$/,
+                loader: 'ts-shader-loader',
+            },
         ],
     },
     plugins: [
