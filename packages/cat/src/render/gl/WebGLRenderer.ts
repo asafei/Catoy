@@ -3,7 +3,9 @@
 import {Scene} from '../../Scene'
 import {Camera} from '../../camera'
 import {Actor} from '../../core'
+import {AbstractLight} from '../../light'
 import {InstanceModel, Model} from '../../model'
+import {Material} from '../../model/material/Material'
 import {WGLUtil} from '../../util'
 import {UniformSetter} from './utils'
 import {WebGLState} from './utils/WebGLState'
@@ -12,8 +14,10 @@ export class WebGLRenderer {
     public gl: WebGL2RenderingContext
     public webGLState: WebGLState
 
+    // TODO： 需要把每一个拆分的actor进行标记计数，动态销毁
     // 最简陋的，直接绘制  =>  区分透明和不透明 + renderOrder
     private renderStore = new Map<string, Actor[]>()
+    private lightStore = new Map<string, AbstractLight[]>()
     private actorToVAO = new WeakMap<Actor, WebGLVertexArrayObject>()
     private actorToUniformInfos = new WeakMap<Actor, Map<string, WebGLUniformInfo>>()
 
@@ -29,13 +33,6 @@ export class WebGLRenderer {
     render(camera: Camera): void {
         // 渲染: 不透明 => 透明
         const {gl, canvas} = this
-        // gl.enable(gl.DEPTH_TEST)
-        // gl.depthFunc(gl.LESS)
-        {
-            // 渲染天空
-            // gl.enable(gl.DEPTH_TEST)
-            // gl.depthFunc(gl.LEQUAL)
-        }
 
         gl.clearColor(0.0, 0.0, 0.0, 1)
         gl.clearDepth(1.0)
@@ -61,110 +58,131 @@ export class WebGLRenderer {
                     this.webGLState.disable(gl.DEPTH_TEST)
                 }
 
+                // 处理全局uniform
                 const uniformInfos = this.actorToUniformInfos.get(actor0)
                 uniformInfos?.forEach((uniformInfo, uniformName) => {
-                    if (uniformName.startsWith('camera')) {
-                        const value = (camera as any)[uniformName.split('_u')[1]]
-                        value !== undefined &&
-                            UniformSetter.setValue(this.gl, uniformInfo.location, value, uniformInfo.type)
+                    this.setUniformValue('camera', camera, uniformName, uniformInfo)
+
+                    if (uniformName.includes('Light_u')) {
+                        const [lightType] = uniformName.split('_u')
+                        const light = (this.lightStore.get(lightType) || [])[0] as AbstractLight
+                        this.setUniformValue('light', light, uniformName, uniformInfo)
                     }
                 })
 
-                actors.forEach(actor => {
-                    // this.renderActor(actor)
-                    if (actor instanceof Model || actor instanceof InstanceModel) {
-                        // 设置Model参数 => 设置Material参数 => Geometry.render
-                        const uniformInfos = this.actorToUniformInfos.get(actor)
-                        const vao = this.actorToVAO.get(actor)
-                        uniformInfos?.forEach((uniformInfo, uniformName) => {
-                            let value
-                            if (uniformName.startsWith('model')) {
-                                value = (actor as any)[uniformName.split('_u')[1]]
-                            } else if (uniformName.startsWith('material')) {
-                                value = (actor.material as any)[uniformName.split('_u')[1]]
-                            }
-                            if (!(value !== undefined && vao)) {
-                                return
-                            }
-
-                            UniformSetter.setValue(
-                                this.gl,
-                                uniformInfo.location,
-                                value,
-                                uniformInfo.type,
-                                uniformInfo.texture,
-                            )
-                        })
-
-                        if (!vao) {
-                            return
-                        }
-
-                        gl.bindVertexArray(vao)
-
-                        if (actor instanceof InstanceModel) {
-                            if (actor.geometry.index) {
-                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, actor.geometry.index)
-                                gl.drawElements(gl.TRIANGLES, actor.geometry.index.length, gl.UNSIGNED_SHORT, 0)
-                            } else {
-                                gl.drawArraysInstanced(
-                                    gl.TRIANGLES,
-                                    0,
-                                    actor.geometry.vertexCount,
-                                    actor.instanceMatrices.length / 16,
-                                )
-                            }
-                        } else if (actor instanceof Model) {
-                            if (actor.geometry.index) {
-                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, actor.geometry.index)
-                                gl.drawElements(gl.TRIANGLES, actor.geometry.index.length, gl.UNSIGNED_SHORT, 0)
-                            } else {
-                                gl.drawArrays(gl.TRIANGLES, 0, actor.geometry.vertexCount)
-                            }
-                        }
-
-                        gl.bindVertexArray(null)
-                    }
-                })
+                // TODO: 将材质的uniform提出来，renderActor仅提供geometry的绘制功能
+                actors.forEach(actor => this.renderActor(actor))
             }
         })
+    }
+
+    private renderActor(actor: Actor) {
+        const gl = this.gl
+        if (actor instanceof Model || actor instanceof InstanceModel) {
+            // 设置Model参数 => 设置Material参数 => Geometry.render
+            const uniformInfos = this.actorToUniformInfos.get(actor)
+            const vao = this.actorToVAO.get(actor)
+            if (!vao) {
+                return
+            }
+            uniformInfos?.forEach((uniformInfo, uniformName) => {
+                // this.setUniformValue(actor, uniformName, uniformInfo)
+                this.setUniformValue('model', actor, uniformName, uniformInfo)
+                this.setUniformValue('material', actor.material, uniformName, uniformInfo)
+            })
+
+            gl.bindVertexArray(vao)
+
+            if (actor instanceof InstanceModel) {
+                if (actor.geometry.index) {
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, actor.geometry.index)
+                    gl.drawElements(gl.TRIANGLES, actor.geometry.index.length, gl.UNSIGNED_SHORT, 0)
+                } else {
+                    gl.drawArraysInstanced(
+                        gl.TRIANGLES,
+                        0,
+                        actor.geometry.vertexCount,
+                        actor.instanceMatrices.length / 16,
+                    )
+                }
+            } else if (actor instanceof Model) {
+                if (actor.geometry.index) {
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, actor.geometry.index)
+                    gl.drawElements(gl.TRIANGLES, actor.geometry.index.length, gl.UNSIGNED_SHORT, 0)
+                } else {
+                    gl.drawArrays(gl.TRIANGLES, 0, actor.geometry.vertexCount)
+                }
+            }
+
+            gl.bindVertexArray(null)
+        }
+    }
+
+    private setUniformValue(
+        actorType: string,
+        actor: Model | InstanceModel | Material | Camera | AbstractLight,
+        uniformName: string,
+        uniformInfo: WebGLUniformInfo,
+    ) {
+        const gl = this.gl
+        let actorChecked = false
+
+        switch (actorType) {
+            case 'model':
+                actorChecked = actor instanceof Model || actor instanceof InstanceModel ? true : false
+                actorChecked && (actorChecked = uniformName.startsWith(actorType))
+                break
+            case 'material':
+                actorChecked = actor instanceof Material ? true : false
+                actorChecked && (actorChecked = uniformName.startsWith(actorType))
+                break
+            case 'camera':
+                actorChecked = actor instanceof Camera ? true : false
+                actorChecked && (actorChecked = uniformName.startsWith(actorType))
+                break
+            case 'light':
+                actorChecked = actor instanceof AbstractLight ? true : false
+                // TODO: 统一起来, actor补充type属性
+                actorChecked && (actorChecked = uniformName.includes('Light_u'))
+                break
+            default:
+                break
+        }
+
+        const uValue = actorChecked ? (actor as any)[uniformName.split('_u')[1]] : null
+        uValue !== null &&
+            UniformSetter.setValue(gl, uniformInfo.location, uValue, uniformInfo.type, uniformInfo.texture)
     }
 
     public prepare(scene: Scene): void {
-        this.prepareSkybox(scene.skybox)
+        // 天空盒子
+        this.prepareActor(scene.skybox as Actor)
 
+        // 渲染物体
         scene.traverse((actor: Actor) => {
-            // 当前仅考虑Model和InstanceModel，暂不考虑灯光相关
-            const programInfo = ProgramStore.getProgramInfoByActor(this.gl, actor)
-            if (programInfo) {
-                !this.renderStore.has(programInfo.programKey) && this.renderStore.set(programInfo.programKey, [])
-                this.renderStore.get(programInfo.programKey)?.push(actor)
-
-                // actor => program => uniforms，获取uniform的配置：name，size，type，location
-                const uniformInfos = WebGLUniformExecutor.getUniformMapInfo(this.gl, programInfo.program, actor)
-                uniformInfos && this.actorToUniformInfos.set(actor, uniformInfos)
-
-                // TODO 初始化geometryBuffer => vao好了
-                const vao = WebGLBufferExecutor.getVAO(this.gl, programInfo.program, actor)
-                vao && this.actorToVAO.set(actor, vao)
+            if (actor instanceof AbstractLight) {
+                !this.lightStore.has(actor.type) && this.lightStore.set(actor.type, [])
+                this.lightStore.get(actor.type)?.push(actor)
+                return
             }
+            this.prepareActor(actor)
         })
     }
 
-    private prepareSkybox(skybox: any) {
-        if (!skybox) return
-        const programInfo = ProgramStore.getProgramInfoByActor(this.gl, skybox)
+    private prepareActor(actor: Actor) {
+        if (!actor) return
+        const programInfo = ProgramStore.getProgramInfoByActor(this.gl, actor)
         if (programInfo) {
             !this.renderStore.has(programInfo.programKey) && this.renderStore.set(programInfo.programKey, [])
-            this.renderStore.get(programInfo.programKey)?.push(skybox)
+            this.renderStore.get(programInfo.programKey)?.push(actor)
 
             // actor => program => uniforms，获取uniform的配置：name，size，type，location
-            const uniformInfos = WebGLUniformExecutor.getUniformMapInfo(this.gl, programInfo.program, skybox)
-            uniformInfos && this.actorToUniformInfos.set(skybox, uniformInfos)
+            const uniformInfos = WebGLUniformExecutor.getUniformMapInfo(this.gl, programInfo.program, actor)
+            uniformInfos && this.actorToUniformInfos.set(actor, uniformInfos)
 
             // TODO 初始化geometryBuffer => vao好了
-            const vao = WebGLBufferExecutor.getVAO(this.gl, programInfo.program, skybox)
-            vao && this.actorToVAO.set(skybox, vao)
+            const vao = WebGLBufferExecutor.getVAO(this.gl, programInfo.program, actor)
+            vao && this.actorToVAO.set(actor, vao)
         }
     }
 }

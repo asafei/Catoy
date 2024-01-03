@@ -1,121 +1,34 @@
 /** @format */
 
+import {Color, ImageCube} from '../../core'
 import {Material} from './Material'
-import VSCode from '../../render/gl/shader/phong.vs.glsl'
-import FSCode from '../../render/gl/shader/phong.fs.glsl'
-import {Color} from '../../core'
+import VSCode from '../../render/gl/shader/reflect.vs.glsl'
+import FSCode from '../../render/gl/shader/reflect.fs.glsl'
 
-export class PhongMaterial extends Material {
-    public diffuseColor: Color = [1, 1, 1]
-    public diffuseMap: HTMLImageElement | undefined = undefined
-    public specularColor: Color = [1, 1, 1]
-    public specularMap: HTMLImageElement | undefined = undefined
-    public shininess = 128
+export class ReflectMaterial extends Material {
+    // public environmentMap: HTMLImageElement[] | undefined = undefined
+    // public reflectivity = 1
+    // public refractionRatio = 0.98
 
-    public environmentMap: HTMLImageElement[] | undefined = undefined
-    public reflectivity = 1
-    public refractionRatio = 0.98
+    public environment!: Color | ImageCube
 
-    get Shininess(): number {
-        return this.shininess
+    get EnvColor(): Color {
+        return this.environment.length === 6 ? [1, 0, 0] : this.environment
     }
 
-    get IsDiffuseMap(): boolean {
-        return this.diffuseMap !== undefined
+    get IsTexture(): boolean {
+        return this.environment.length === 6 ? true : false
     }
 
-    get IsSpecularMap(): boolean {
-        return this.specularMap !== undefined
+    get TextureEnv(): ImageCube | undefined {
+        return this.environment.length === 6 ? this.environment : undefined
     }
 
-    get DiffuseColor(): Color {
-        return this.diffuseColor
-    }
-
-    get SpecularColor(): Color {
-        return this.specularColor
-    }
-
-    get DiffuseMap(): HTMLImageElement | undefined {
-        return this.diffuseMap
-    }
-
-    get SpecularMap(): HTMLImageElement | undefined {
-        return this.specularMap
-    }
-
-    constructor(diffuse: HTMLImageElement | Color = [1, 1, 1], specular: HTMLImageElement | Color = [1, 1, 1]) {
-        super('PhongMaterial', vsCode, fsCode)
+    constructor(environment: Color | ImageCube) {
+        super('ReflectMaterial', vsCode, fsCode)
+        this.environment = environment
         this.VSCode = VSCode
         this.FSCode = FSCode
-
-        if (Array.isArray(diffuse)) {
-            this.diffuseColor = diffuse
-        } else {
-            this.diffuseMap = diffuse
-        }
-
-        if (Array.isArray(specular)) {
-            this.specularColor = specular
-        } else {
-            this.specularMap = specular
-        }
-    }
-
-    onBuild(gl: WebGL2RenderingContext): void {
-        super.onBuild(gl)
-        if (this._program) {
-            // 获取与材质相关的uniform
-            // const samplerDiffuse = gl.getUniformLocation(this._program, 'u_texture0')
-            // const samplerSpecular = gl.getUniformLocation(this._program, 'u_texture1')
-            const samplerEnv = gl.getUniformLocation(this._program, 'u_textureEnv')
-            // const materialShininess = gl.getUniformLocation(this._program, 'u_materialShininess')
-
-            // TODO: 如何避免重复构建, 还是放在外边
-            if (this.environmentMap) {
-                // const cubeTexture = gl.createTexture()
-                // gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeTexture)
-                // for (let i = 0; i < 6; i++) {
-                //     const {width, height} = this.environmentMap[i]
-                //     gl.texImage2D(
-                //         gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                //         0,
-                //         gl.RGBA,
-                //         width,
-                //         height,
-                //         0,
-                //         gl.RGBA,
-                //         gl.UNSIGNED_BYTE,
-                //         this.environmentMap[i],
-                //     )
-                // }
-                // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-                // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-                // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-                // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-                // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
-
-                // gl.bindTexture(gl.TEXTURE_CUBE_MAP, null)
-                const cubeTexture = this.createTexture(gl, this.environmentMap)
-
-                this._uniforms._environment = {
-                    location: samplerEnv,
-                    value: cubeTexture,
-                    isTexture: true,
-                }
-            }
-        }
-    }
-
-    setup(gl: WebGL2RenderingContext): void {
-        const {_environment} = this._uniforms
-        gl.activeTexture(gl.TEXTURE0 + 0)
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, _environment.value)
-        gl.uniform1i(_environment.location, 0)
-    }
-
-    getUniforms(): string[] {
-        return ['color', 'map']
     }
 }
 

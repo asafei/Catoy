@@ -12,7 +12,7 @@ in vec2 vUV;
 uniform vec3 material_uColor;
 uniform float material_uIsTexture;
 uniform sampler2D material_uTexture;
-uniform sampler2D material_uTexture2;
+// uniform sampler2D material_uTexture2;
 
 
 out vec4 outColor;

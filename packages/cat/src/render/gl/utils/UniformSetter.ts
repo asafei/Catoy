@@ -80,20 +80,50 @@ export class UniformSetter {
     }
 
     // sampler
-    static setValueT1(
-        gl: WebGL2RenderingContext,
-        location: WebGLUniformLocation,
-        value: any,
-        texture?: WebGLTexture,
-    ): void {
-        gl.uniform1i(location, value)
-        if (texture) {
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, texture)
-        } else {
-            gl.bindTexture(gl.TEXTURE_2D, null)
+    // static setValueT1(
+    //     gl: WebGL2RenderingContext,
+    //     location: WebGLUniformLocation,
+    //     value: any,
+    //     texture?: WebGLTexture,
+    // ): void {
+    //     gl.uniform1i(location, value)
+    //     if (texture) {
+    //         gl.activeTexture(gl.TEXTURE0)
+    //         gl.bindTexture(gl.TEXTURE_2D, texture)
+    //     } else {
+    //         gl.bindTexture(gl.TEXTURE_2D, null)
+    //     }
+    // }
+
+    static setValueT1 = (() => {
+        let curTextureIndex = 0
+        const textureMap = new WeakMap<WebGLTexture, number>()
+
+        function getTextureIndex(texture: WebGLTexture) {
+            if (textureMap.get(texture) === undefined) {
+                textureMap.set(texture, curTextureIndex)
+                curTextureIndex++
+            }
+            return textureMap.get(texture) as number
         }
-    }
+
+        return function (
+            gl: WebGL2RenderingContext,
+            location: WebGLUniformLocation,
+            value: any,
+            texture?: WebGLTexture,
+        ) {
+            // console.log(value)
+            // gl.uniform1i(location, value)
+            if (texture) {
+                gl.activeTexture(gl.TEXTURE0 + getTextureIndex(texture))
+                gl.bindTexture(gl.TEXTURE_2D, texture)
+                gl.uniform1i(location, getTextureIndex(texture))
+            } else {
+                gl.bindTexture(gl.TEXTURE_2D, null)
+            }
+        }
+    })()
 
     static setValueT3D1(gl: WebGL2RenderingContext, location: WebGLUniformLocation, value: any): void {
         gl.uniform1i(location, value)
